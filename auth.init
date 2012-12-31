@@ -1,0 +1,41 @@
+#!/bin/sh
+daemon=/usr/local/mail/bin/auth
+options=
+pidfile="/usr/local/mail/run/auth.pid"
+logfile="/usr/local/mail/log/auth"
+usage="Usage: start|stop|restart"
+
+function start () {
+  if [ -f "$pidfile" ]
+  then
+    echo "Auth is already running with pid(`cat "$pidfile"`)!"
+    echo "If this isn't true remove the pid file and try again."
+    return 1
+  else
+    $daemon $options 1>> "$logfile" 2>> "$logfile" &
+    echo $! > "$pidfile"
+    echo "Auth started!"
+  fi
+  return 0
+}
+
+function stop () {
+  if [ -f "$pidfile" ]
+  then
+    start-stop-daemon --quiet --stop --oknodo --pidfile "$pidfile" --retry 5
+    rm -f "$pidfile"
+    echo "Auth stopped!"
+  else
+    echo "Auth is not running!"
+    return 1
+  fi
+  return 0
+}
+
+case "$1" in
+  stop) stop ;;
+  start) start ;;
+  restart) stop && start ;;
+  *) echo $usage ;;
+esac
+
